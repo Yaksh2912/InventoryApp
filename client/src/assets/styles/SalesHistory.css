@@ -1,0 +1,59 @@
+/* Sales History Page */
+.sales-history-container {
+  padding: 40px;
+  font-family: 'Poppins', sans-serif;
+  background-color: #fefefe;
+  min-height: 100vh;
+}
+
+.sales-history-container h2 {
+  font-size: 2rem;
+  color: #1e293b;
+  margin-bottom: 32px;
+}
+
+.sales-history-block {
+  background-color: #ffffff;
+  padding: 24px;
+  margin-bottom: 36px;
+  border-radius: 10px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+}
+
+.sales-history-block h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #0f172a;
+  border-left: 4px solid #22c55e;
+  padding-left: 12px;
+}
+
+.sales-history-block table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sales-history-block th,
+.sales-history-block td {
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.95rem;
+}
+
+.sales-history-block th {
+  background-color: #f1f5f9;
+  font-weight: 600;
+  color: #334155;
+}
+
+.sales-history-block td {
+  color: #475569;
+}
+
+.empty-sales-msg {
+  color: #9ca3af;
+  font-style: italic;
+  margin-top: 12px;
+}
