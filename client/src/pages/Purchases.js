@@ -1,21 +1,33 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import '../assets/styles/SalesPurchases.css';
-import { useLocation } from 'react-router-dom';
+import { getAllProducts } from '../services/productService';
 
 const Purchases = () => {
-  const location = useLocation();
-  const { state } = location;
-  const products = state?.products || [];
+  const [purchaseHistory, setPurchaseHistory] = useState([]);
 
-  const purchaseHistory = products.flatMap((product) =>
-    product.purchaseHistory.map((entry, index) => ({
-      ...entry,
-      product: product.name,
-      department: product.department,
-      id: `${product.name}-${index}`,
-    }))
-  );
+  useEffect(() => {
+    const fetchPurchases = async () => {
+      try {
+        const products = await getAllProducts();
+
+        const allPurchases = products.flatMap((product) =>
+          product.purchaseHistory.map((entry, index) => ({
+            ...entry,
+            product: product.name,
+            department: product.department,
+            id: `${product._id}-purchase-${index}`,
+          }))
+        );
+
+        setPurchaseHistory(allPurchases);
+      } catch (err) {
+        console.error('Failed to fetch purchases:', err);
+      }
+    };
+
+    fetchPurchases();
+  }, []);
 
   return (
     <div className="sales-container">

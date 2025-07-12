@@ -6,9 +6,12 @@ const {
   getProductById,
   createProduct,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  sellProduct, 
+  purchaseProduct
 } = require('../controllers/productController');
 const { protect } = require('../middleware/authMiddleware');
+
 
 
 // Validators
@@ -25,5 +28,8 @@ router.get('/:id', protect, getProductById);
 router.post('/', protect, productValidation, createProduct);
 router.put('/:id', protect, productValidation, updateProduct);
 router.delete('/:id', protect, deleteProduct);
+
+router.patch('/:id/sell', protect, sellProduct);
+router.patch('/:id/purchase', protect, purchaseProduct);
 
 module.exports = router;

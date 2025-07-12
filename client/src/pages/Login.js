@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import '../assets/styles/Auth.css';
+import { login } from '../services/authService';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -8,17 +9,17 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
 
-    const storedUsers = JSON.parse(localStorage.getItem('users')) || [];
-    const existingUser = storedUsers.find((user) => user.email === email && user.password === password);
-
-    if (existingUser) {
-      localStorage.setItem('token', 'mock-token');
+    try {
+      const data = await login({ email, password });
+      localStorage.setItem('token', data.token); // or sessionStorage if preferred
       navigate('/dashboard');
-    } else {
-      setError('Invalid email or password');
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Login failed';
+      setError(msg);
     }
   };
 

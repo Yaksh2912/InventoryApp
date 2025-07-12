@@ -1,88 +1,122 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import '../assets/styles/Dashboard.css';
+import {
+  getAllProducts,
+  addProduct,
+  updateProduct,
+  deleteProduct,
+  sellProduct,
+  purchaseProduct
+} from '../services/productService';
 
 const departments = ['Engine', 'Electrical', 'Suspension', 'Body', 'Interior', 'Brakes', 'Transmission'];
 
 const Dashboard = () => {
   const navigate = useNavigate();
-
-  const [products, setProducts] = useState([
-    { name: 'Alternator', stock: 15, price: 2500, department: 'Electrical', salesHistory: [], purchaseHistory: [] },
-    { name: 'Radiator', stock: 8, price: 3400, department: 'Engine', salesHistory: [], purchaseHistory: [] },
-    { name: 'Shock Absorber', stock: 20, price: 1900, department: 'Suspension', salesHistory: [], purchaseHistory: [] },
-  ]);
-
+  const [products, setProducts] = useState([]);
   const [form, setForm] = useState({ name: '', stock: '', price: '', department: '' });
   const [editingIndex, setEditingIndex] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDept, setFilterDept] = useState('');
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const data = await getAllProducts();
+      setProducts(data);
+    } catch (err) {
+      console.error('Error fetching products:', err);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
   };
 
-  const handleAddOrUpdate = (e) => {
+  const handleAddOrUpdate = async (e) => {
     e.preventDefault();
-    const newProduct = {
+
+    const payload = {
       name: form.name,
       stock: parseInt(form.stock),
       price: parseFloat(form.price),
       department: form.department,
-      salesHistory: [],
-      purchaseHistory: [],
     };
 
-    if (!form.name || !form.department || isNaN(newProduct.stock) || isNaN(newProduct.price)) {
+    if (!form.name || !form.department || isNaN(payload.stock) || isNaN(payload.price)) {
       alert('Please fill in all fields correctly.');
       return;
     }
 
-    if (editingIndex !== null) {
-      const updated = [...products];
-      newProduct.salesHistory = updated[editingIndex].salesHistory;
-      newProduct.purchaseHistory = updated[editingIndex].purchaseHistory;
-      updated[editingIndex] = newProduct;
-      setProducts(updated);
-      setEditingIndex(null);
-    } else {
-      setProducts([...products, newProduct]);
-    }
+    try {
+      if (editingIndex !== null) {
+        const id = products[editingIndex]._id;
+        await updateProduct(id, payload);
+      } else {
+        await addProduct(payload);
+      }
 
-    setForm({ name: '', stock: '', price: '', department: '' });
+      fetchProducts();
+      setForm({ name: '', stock: '', price: '', department: '' });
+      setEditingIndex(null);
+    } catch (err) {
+      console.error('Error saving product:', err);
+    }
   };
 
   const handleEdit = (index) => {
-    setForm(products[index]);
+    const product = products[index];
+    setForm({
+      name: product.name,
+      stock: product.stock,
+      price: product.price,
+      department: product.department,
+    });
     setEditingIndex(index);
   };
 
-  const handleDelete = (index) => {
-    const updated = products.filter((_, i) => i !== index);
-    setProducts(updated);
-    setForm({ name: '', stock: '', price: '', department: '' });
-    setEditingIndex(null);
+  const handleDelete = async (index) => {
+    const id = products[index]._id;
+    try {
+      await deleteProduct(id);
+      fetchProducts();
+      setForm({ name: '', stock: '', price: '', department: '' });
+      setEditingIndex(null);
+    } catch (err) {
+      console.error('Error deleting product:', err);
+    }
   };
 
-  const handleSale = (index) => {
+  const handleSale = async (index) => {
     const qty = parseInt(prompt('Enter quantity to sell:'));
     if (isNaN(qty) || qty <= 0) return;
-    const updated = [...products];
-    if (updated[index].stock < qty) return alert('Not enough stock!');
-    updated[index].stock -= qty;
-    updated[index].salesHistory.push({ qty, date: new Date().toISOString() });
-    setProducts(updated);
+
+    const id = products[index]._id;
+    try {
+      await sellProduct(id, qty);
+      fetchProducts();
+    } catch (err) {
+      alert('Sale failed: ' + (err.response?.data?.message || err.message));
+    }
   };
 
-  const handlePurchase = (index) => {
+  const handlePurchase = async (index) => {
     const qty = parseInt(prompt('Enter quantity to purchase:'));
     if (isNaN(qty) || qty <= 0) return;
-    const updated = [...products];
-    updated[index].stock += qty;
-    updated[index].purchaseHistory.push({ qty, date: new Date().toISOString() });
-    setProducts(updated);
+
+    const id = products[index]._id;
+    try {
+      await purchaseProduct(id, qty);
+      fetchProducts();
+    } catch (err) {
+      alert('Purchase failed: ' + (err.response?.data?.message || err.message));
+    }
   };
 
   const filteredProducts = products.filter(
@@ -104,9 +138,7 @@ const Dashboard = () => {
           <select name="department" value={form.department} onChange={handleChange}>
             <option value="">Select Department</option>
             {departments.map((dept) => (
-              <option key={dept} value={dept}>
-                {dept}
-              </option>
+              <option key={dept} value={dept}>{dept}</option>
             ))}
           </select>
           <button type="submit">{editingIndex !== null ? 'Update Product' : 'Add Product'}</button>
@@ -117,9 +149,7 @@ const Dashboard = () => {
           <select value={filterDept} onChange={(e) => setFilterDept(e.target.value)}>
             <option value="">All Departments</option>
             {departments.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
+              <option key={d} value={d}>{d}</option>
             ))}
           </select>
         </div>
@@ -143,7 +173,7 @@ const Dashboard = () => {
                 </thead>
                 <tbody>
                   {deptItems.map((item, i) => {
-                    const index = products.indexOf(item);
+                    const index = products.findIndex((p) => p._id === item._id);
                     return (
                       <tr key={i}>
                         <td>{item.name}</td>

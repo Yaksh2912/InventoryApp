@@ -65,3 +65,41 @@ exports.deleteProduct = async (req, res) => {
     res.status(500).json({ message: 'Error deleting product' });
   }
 };
+
+// PATCH: Sell product (decrease stock & record sale)
+exports.sellProduct = async (req, res) => {
+  try {
+    const { qty } = req.body;
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    if (product.stock < qty) {
+      return res.status(400).json({ message: 'Not enough stock to sell' });
+    }
+
+    product.stock -= qty;
+    product.salesHistory.push({ qty, date: new Date() });
+    await product.save();
+
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ message: 'Error during sale', error: err.message });
+  }
+};
+
+// PATCH: Purchase product (increase stock & record purchase)
+exports.purchaseProduct = async (req, res) => {
+  try {
+    const { qty } = req.body;
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    product.stock += qty;
+    product.purchaseHistory.push({ qty, date: new Date() });
+    await product.save();
+
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ message: 'Error during purchase', error: err.message });
+  }
+};

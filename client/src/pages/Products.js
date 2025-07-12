@@ -1,32 +1,19 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import '../assets/styles/Products.css';
-
-const productData = [
-  {
-    name: 'Alternator',
-    stock: 15,
-    price: 2500,
-    department: 'Electrical',
-    description: 'Converts mechanical energy into electrical energy in a car.',
-  },
-  {
-    name: 'Radiator',
-    stock: 8,
-    price: 3400,
-    department: 'Engine',
-    description: 'Cools the engine by circulating coolant through metal fins.',
-  },
-  {
-    name: 'Shock Absorber',
-    stock: 20,
-    price: 1900,
-    department: 'Suspension',
-    description: 'Absorbs and dampens shock impulses from road irregularities.',
-  },
-];
+import { getAllProducts } from '../services/productService';
 
 const Products = () => {
+  const [productData, setProductData] = useState([]);
+
+  useEffect(() => {
+    getAllProducts()
+      .then((data) => setProductData(data))
+      .catch((err) => {
+        console.error('Failed to fetch products:', err);
+      });
+  }, []);
+
   return (
     <div className="products-container">
       <Sidebar />
